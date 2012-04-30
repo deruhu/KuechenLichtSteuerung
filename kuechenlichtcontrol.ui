@@ -26,7 +26,7 @@
     <string>senden</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -48,33 +48,54 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>251</width>
+     <width>211</width>
      <height>30</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QLineEdit" name="lineEditRot"/>
+     <widget class="QLineEdit" name="lineEditRot">
+      <property name="text">
+       <string>255</string>
+      </property>
+      <property name="placeholderText">
+       <string/>
+      </property>
+     </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="lineEditGruen"/>
+     <widget class="QLineEdit" name="lineEditGruen">
+      <property name="text">
+       <string>255</string>
+      </property>
+      <property name="placeholderText">
+       <string/>
+      </property>
+     </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="lineEditBlau"/>
+     <widget class="QLineEdit" name="lineEditBlau">
+      <property name="text">
+       <string>255</string>
+      </property>
+      <property name="placeholderText">
+       <string/>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>251</width>
+     <width>211</width>
      <height>20</height>
     </rect>
    </property>
@@ -113,6 +134,19 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QToolButton" name="selectColorButton">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>10</y>
+     <width>31</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>...</string>
+   </property>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

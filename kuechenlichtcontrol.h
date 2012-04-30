@@ -2,6 +2,14 @@
 #define KUECHENLICHTCONTROL_H
 
 #include <QWidget>
+#include <QColor>
+#include <QColorDialog>
+
+typedef struct {
+    QString rotString;
+    QString gruenString;
+    QString blauString;
+}ledFarben;
 
 namespace Ui {
     class KuechenLichtControl;
@@ -18,8 +26,13 @@ public:
 private slots:
     void on_sendButton_clicked();
 
+    void on_selectColorButton_clicked();
+
 private:
     Ui::KuechenLichtControl *ui;
+    ledFarben   ledrgb;
+    QColor      ledFarbe;
+    QColorDialog colorDialog;
 };
 
 #endif // KUECHENLICHTCONTROL_H
