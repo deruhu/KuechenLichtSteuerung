@@ -5,6 +5,7 @@
 #include <QColorDialog>
 #include <ace/SOCK_Dgram.h>
 #include <ace/INET_Addr.h>
+#include "udpkuechenlicht.h"
 
 
 KuechenLichtControl::KuechenLichtControl(QWidget *parent) :
@@ -22,12 +23,28 @@ KuechenLichtControl::~KuechenLichtControl()
 void KuechenLichtControl::on_sendButton_clicked()
 {
     static const u_short portKuechenLicht = 4898;
+
+
+
     ACE_INET_Addr remote;
     ACE_SOCK_Dgram sendsocket;
     ACE_INET_Addr local ((u_short) 0);
+    kuechenLichtLEDStatus kLEDStatus;
+
+    remote.set(portKuechenLicht,lineEditIP.toInt());
+
+    kLEDStatus.rot=(unsigned char)ledFarbe.red();
+    kLEDStatus.gruen=(unsigned char)ledFarbe.green();
+    kLEDStatus.blau=(unsigned char)ledFarbe.blue();
+    kLEDStatus.header.receiverAddress=ui->lineEditIP.toInt();
+
+    remote.
+
+
 
     sendsocket.open(local);
-    udp.send();
+
+    client.send (&kLEDStatus, sizeof (kuechenLichtLEDStatus), remote);
 }
 
 void KuechenLichtControl::on_selectColorButton_clicked()

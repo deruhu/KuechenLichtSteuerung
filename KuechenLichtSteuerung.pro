@@ -13,6 +13,8 @@ TEMPLATE = app
 SOURCES += main.cpp\
         kuechenlichtcontrol.cpp
 
-HEADERS  += kuechenlichtcontrol.h
+HEADERS  += \
+    ../ethersex/protocols/kuechenlichtprotokoll/udpkuechenlicht.h \
+    kuechenlichtcontrol.h
 
 FORMS    += kuechenlichtcontrol.ui
