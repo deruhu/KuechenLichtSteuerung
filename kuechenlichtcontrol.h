@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QColor>
 #include <QColorDialog>
+#include <ace/INET_Addr.h>
 
 typedef struct {
     QString rotString;
@@ -37,6 +38,7 @@ private:
     QColorDialog colorDialog;
 
     void findModules(void);
+    void handleMessage(ssize_t recv_cnt,char* buff,bool* erfolg,ACE_INET_Addr* pSollSender, ACE_INET_Addr* pIstSender);
 };
 
 #endif // KUECHENLICHTCONTROL_H
