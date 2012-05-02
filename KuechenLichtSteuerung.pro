@@ -9,12 +9,20 @@ QT       += core gui
 TARGET = KuechenLichtSteuerung
 TEMPLATE = app
 
+LIBS    +=../../ACE_wrappers/lib/libACE.so \
+          ../../ACE_wrappers/ace/libACE.so.6.0.6
+
+INCLUDEPATH += ../../ACE_wrappers/ace/ \
+            ../../ACE_wrappers/
+
 
 SOURCES += main.cpp\
         kuechenlichtcontrol.cpp
 
 HEADERS  += \
     ../ethersex/protocols/kuechenlichtprotokoll/udpkuechenlicht.h \
-    kuechenlichtcontrol.h
+    kuechenlichtcontrol.h \
+    ../../ACE_wrappers/ace/SOCK_Dgram.h \
+    ../../ACE_wrappers/ace/INET_Addr.h
 
 FORMS    += kuechenlichtcontrol.ui

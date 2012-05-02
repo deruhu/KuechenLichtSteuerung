@@ -28,11 +28,15 @@ private slots:
 
     void on_selectColorButton_clicked();
 
+    void on_findModulesPushButton_clicked();
+
 private:
     Ui::KuechenLichtControl *ui;
     ledFarben   ledrgb;
     QColor      ledFarbe;
     QColorDialog colorDialog;
+
+    void findModules(void);
 };
 
 #endif // KUECHENLICHTCONTROL_H
