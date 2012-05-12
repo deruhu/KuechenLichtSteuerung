@@ -45,18 +45,10 @@ private:
     QColor      ledFarbe;
     QColorDialog colorDialog;
     kuechenLichtLEDStatus kSenderLEDStatus;
-    ACE_INET_Addr mBCAddress;
-    ACE_Time_Value timeout;
-    std::string      mBCAddressString;
-    ACE_SOCK_Dgram_Bcast* pBCSocket;
-    ACE_SOCK_Dgram* pRecSocket;
-    ACE_SOCK_Dgram* pSendSocket;
-    std::map<ACE_UINT32, kuechenLicht_rsp_set>    mLichterMap;
+
 
 
     void findModules(void);
-    void handleMessage(ssize_t recv_cnt,char* buff,bool* erfolg,ACE_INET_Addr* pSollSender, ACE_INET_Addr* pIstSender);
-    bool handleSetResponse(kuechenLicht_rsp_set*,ACE_INET_Addr* , ACE_INET_Addr*);
     void setup();
 };
 

@@ -17,12 +17,15 @@ INCLUDEPATH += ../../ACE_wrappers/ace/ \
 
 
 SOURCES += main.cpp\
-        kuechenlichtcontrol.cpp
+        kuechenlichtcontrol.cpp \
+    messagehandler.cpp
 
 HEADERS  += \
     ../ethersex/protocols/kuechenlichtprotokoll/udpkuechenlicht.h \
     kuechenlichtcontrol.h \
     ../../ACE_wrappers/ace/SOCK_Dgram.h \
-    ../../ACE_wrappers/ace/INET_Addr.h
+    ../../ACE_wrappers/ace/INET_Addr.h \
+    messagehandler.h \
+    global.h
 
 FORMS    += kuechenlichtcontrol.ui
