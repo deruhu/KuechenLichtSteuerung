@@ -72,8 +72,9 @@ void KuechenLichtControl::on_sendButton_clicked()
     int i=0;
     while((kDurchlaeufe<15) && (!erfolg))
     {
-
+        mutexSendSock.lock();
         size_t sent_data_length = pSendSocket->send(&commandSet, sizeof (kuechenLicht_cmd_set), remote);
+        mutexSendSock.unlock();
 
         if(sent_data_length==-1)
         {
@@ -81,9 +82,6 @@ void KuechenLichtControl::on_sendButton_clicked()
                                   tr("Konnte die Daten nicht senden!"));
             return;
         }
-
-        erfolg= handleMessage(&remote,kSenderLEDStatus.);
-
     }
 }
 
@@ -131,6 +129,5 @@ void KuechenLichtControl::findModules(void)
         pBCSocket->send(&commandCome,sizeof(kuechenLicht_cmd_come_all_ye_faithful),mBCAddress);
         mutexSendSock.unlock();
         i++;
-
     }
 }

@@ -13,7 +13,7 @@ MessageHandler::MessageHandler()
 }
 
 
-bool MessageHandler::handleMessage(ACE_INET_Addr* pSollSender=0)
+bool MessageHandler::handleMessage()
 {
     ACE_INET_Addr remote;
     char buff[1500]={0};
@@ -37,11 +37,11 @@ bool MessageHandler::handleMessage(ACE_INET_Addr* pSollSender=0)
             switch(pParseHeader)
             {
             case KUECHENLICHT_ID_RSP_SET:
-                erfolg=handleSetResponse((kuechenLicht_rsp_set*)&buff[i],pSollSender,pIstSender);
+                handleSetResponse((kuechenLicht_rsp_set*)&buff[i],&remote);
                 break;
 
             case KUECHENLICHT_ID_RSP_CAYF:
-                handleCAYFResponse((kuechenLicht_rsp_cayf*)&buff[i]);
+                handleCAYFResponse((kuechenLicht_rsp_cayf*)&buff[i],&remote);
                 break;
 
             default:
@@ -53,7 +53,7 @@ bool MessageHandler::handleMessage(ACE_INET_Addr* pSollSender=0)
     return erfolg;
 }
 
-void KuechenLichtControl::handleCAYFResponse(kuechenLicht_rsp_cayf* pRespond, ACE_INET_Addr* pIstSender)
+void MessageHandler::handleCAYFResponse(kuechenLicht_rsp_cayf* pRespond, ACE_INET_Addr* pIstSender)
 {
     kuechenLicht_rsp_set aNeuesLicht;
 
@@ -63,45 +63,41 @@ void KuechenLichtControl::handleCAYFResponse(kuechenLicht_rsp_cayf* pRespond, AC
     aNeuesLicht.kLEDStatus=pRespond->kLEDStatus;
     aNeuesLicht.an=pRespond->an;
 
+    mutexLichterMap.lock();
     if(!(mLichterMap.count(pRespond->kHeader.modulAddress)))
     {
-        mutexLichterMap.lock();
+
         mLichterMap.insert(std::pair<std::string,kuechenLicht_rsp_set>(pIstSender->get_host_addr(),aNeuesLicht));
         mutexLichterMap.unlock();
+        emit signalNewModule();
     }
-
     else
+        mutexLichterMap.unlock();
+    kuechenLicht_cmd_gotcha commandGotcha;
+    commandGotcha.gotcha=true;
+    commandGotcha.kHeader=pRespond->kHeader;
+    commandGotcha.kHeader.messageID=KUECHENLICHT_ID_CMD_GOTCHA;
+    commandGotcha.kHeader.messageLength=sizeof(kuechenLicht_cmd_gotcha);
+
+    mutexSendSock.lock();
+    size_t sent_data_length = pSendSocket->send(&commandGotcha, commandGotcha.kHeader.messageLength, *pIstSender);
+    mutexSendSock.unlock();
+
+    if(sent_data_length==-1)
     {
-        kuechenLicht_cmd_gotcha commandGotcha;
-        commandGotcha.gotcha=true;
-        commandGotcha.kHeader=pRespond->kHeader;
-        commandGotcha.kHeader.messageID=KUECHENLICHT_ID_CMD_GOTCHA;
-        commandGotcha.kHeader.messageLength=sizeof(kuechenLicht_cmd_gotcha);
-
-        mutexSendSock.lock();
-        size_t sent_data_length = pSendSocket->send(&commandGotcha, commandGotcha.kHeader.messageLength, *pIstSender);
-        mutexSendSock.unlock();
-
-        if(sent_data_length==-1)
-        {
-            QMessageBox::critical(this, tr("Error"),
-                                  tr("Konnte Gotcha nicht senden!"));
-            return;
-        }
+        QMessageBox::critical(this, tr("Error"),
+                              tr("Konnte Gotcha nicht senden!"));
+        return;
     }
 
 }
 
-bool KuechenLichtControl::handleSetResponse(kuechenLicht_rsp_set* pKuechenLichtRsp,ACE_INET_Addr* pSollSender,ACE_INET_Addr* pIstSender)
+void MessageHandler::handleSetResponse(kuechenLicht_rsp_set* paKuechenLichtRsp,ACE_INET_Addr* pIstSender)
 {
-    if(!(pSollSender->get_ip_address()==pIstSender->get_ip_address()))
-    {
-        return false;
-    }
+    mutexLichterMap.lock();
+    mLichtermap[pIstSender->get_host_addr()]=paKuechenLichtRsp;
+    mutexLichterMap.unlock();
 
-    if(pKuechenLichtRsp->kLEDStatus==kSenderLEDStatus)
-    {
-        return true;
-    }
+    emit signalStatusUpdate();
 }
 

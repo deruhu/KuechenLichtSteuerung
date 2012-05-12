@@ -22,5 +22,9 @@ private slots:
 
     bool handleSetResponse(kuechenLicht_rsp_set*,ACE_INET_Addr* , ACE_INET_Addr*);
     void handleCAYFResponse(kuechenLicht_rsp_cayf*, ACE_INET_Addr*);
+
+signals:
+   void signalNewModule(void);
+   void signalStatusUpdate(void);
 };
 #endif // MESSAGEHANDLER_H
