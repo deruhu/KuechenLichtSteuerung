@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QMessageBox>
+#include <QComboBox>
 #include <ace/SOCK_Dgram.h>
 #include <ace/SOCK_Dgram_Bcast.h>
 #include <ace/INET_Addr.h>
@@ -23,8 +24,9 @@ KuechenLichtControl::KuechenLichtControl(QWidget *parent) :
     ui->setupUi(this);
 }
 
-KuechenLichtControl::setup()
+void KuechenLichtControl::setup()
 {
+    ModulComboListe.clear();
     findModules();
 }
 
@@ -32,14 +34,14 @@ KuechenLichtControl::~KuechenLichtControl()
 {
     delete ui;
     delete pBCSocket;
-    delete mBCAddress;
+    delete pSendSocket;
 }
 
 void KuechenLichtControl::on_sendButton_clicked()
 {
     QString IPString;
     IPString=ui->lineEditIP->text();
-    ACE_INET_Addr remote((u_short)KUECHENLICHT_UDP_SEND_PORT,IPString.toStdString().c_str());
+    ACE_INET_Addr remote((u_short)KUECHENLICHT_UDP_TEST_PORT,IPString.toStdString().c_str());
 
 
     ledrgb.rotString=ui->lineEditRot->text();
@@ -69,7 +71,6 @@ void KuechenLichtControl::on_sendButton_clicked()
 
     int kDurchlaeufe=0;
     bool erfolg=false;
-    int i=0;
     while((kDurchlaeufe<15) && (!erfolg))
     {
         mutexSendSock.lock();
@@ -104,7 +105,14 @@ void KuechenLichtControl::on_selectColorButton_clicked()
 
 void KuechenLichtControl::on_findModulesPushButton_clicked()
 {
+    mutexLichterMap.lock();
     mLichterMap.clear();
+    mutexLichterMap.unlock();
+
+    ModulComboListe.clear();
+
+    ui->foundModulesComboBox->clear();
+
     findModules();
 }
 
@@ -130,4 +138,22 @@ void KuechenLichtControl::findModules(void)
         mutexSendSock.unlock();
         i++;
     }
+}
+
+
+void KuechenLichtControl::newModuleSlot(std::string aIPString)
+{
+    ui->foundModulesComboBox->clear();
+    ModulComboListe << aIPString.c_str();
+
+}
+
+void KuechenLichtControl::changedStatusSlot()
+{
+
+}
+
+void KuechenLichtControl::on_foundModulesComboBox_activated(const QString &arg1)
+{
+
 }

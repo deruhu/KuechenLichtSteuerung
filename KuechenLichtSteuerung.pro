@@ -15,6 +15,7 @@ LIBS    +=../../ACE_wrappers/lib/libACE.so \
 INCLUDEPATH += ../../ACE_wrappers/ace/ \
             ../../ACE_wrappers/
 
+INCLUDEPATH += ../ethersex/protocols/kuechenlichtprotokoll/
 
 SOURCES += main.cpp\
         kuechenlichtcontrol.cpp \

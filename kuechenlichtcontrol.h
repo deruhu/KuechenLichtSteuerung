@@ -13,6 +13,7 @@
 #include <ace/SOCK_Dgram_Bcast.h>
 #include <udpkuechenlicht.h>
 #include <map>
+#include <QStringList>
 
 typedef struct {
     QString rotString;
@@ -32,6 +33,8 @@ public:
     explicit KuechenLichtControl(QWidget *parent = 0);
     ~KuechenLichtControl();
 
+    void setup();
+
 private slots:
     void on_sendButton_clicked();
 
@@ -39,17 +42,28 @@ private slots:
 
     void on_findModulesPushButton_clicked();
 
+    void newModuleSlot(std::string);
+
+    void changedStatusSlot(void);
+
+    void on_foundModulesComboBox_activated(const QString &arg1);
+
 private:
     Ui::KuechenLichtControl *ui;
     ledFarben   ledrgb;
     QColor      ledFarbe;
     QColorDialog colorDialog;
     kuechenLichtLEDStatus kSenderLEDStatus;
+    QStringList ModulComboListe;
 
 
 
     void findModules(void);
-    void setup();
+
+signals:
+    void sendBCMessage(kuechenLichtHeader*);
+    void sendCmdMessage(kuechenLichtHeader*,ACE_INET_Addr*);
+
 };
 
 #endif // KUECHENLICHTCONTROL_H

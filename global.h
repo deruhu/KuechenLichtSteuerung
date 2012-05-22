@@ -9,14 +9,13 @@
 
 extern ACE_INET_Addr           kBCAddr;
 extern ACE_INET_Addr           kSendAddr;
-extern ACE_INET_Addr           kSendAddr;
 extern ACE_INET_Addr           mBCAddress;
 
-extern volatile ACE_SOCK_Dgram_Bcast*   pBCSocket;
-extern volatile ACE_SOCK_Dgram*         pSendSocket;
+extern ACE_SOCK_Dgram_Bcast    *pBCSocket;
+extern ACE_SOCK_Dgram          *pSendSocket;
 
-extern volatile std::map<std::string, kuechenLicht_rsp_set>    mLichterMap;
-extern ACE_Time_Value          timeout;
+extern std::map<std::string, kuechenLicht_rsp_set>    mLichterMap;
+extern ACE_Time_Value          sendtimeout;
 
 extern std::string             mBCAddressString;
 
