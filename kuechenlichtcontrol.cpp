@@ -7,13 +7,13 @@
 #include <QColorDialog>
 #include <QMessageBox>
 #include <QComboBox>
-#include <ace/SOCK_Dgram.h>
-#include <ace/SOCK_Dgram_Bcast.h>
 #include <ace/INET_Addr.h>
-#include <ace/Time_Value.h>
 #include <udpkuechenlicht.h>
 #include <QMutex>
 #include "global.h"
+#include <QQueue>
+#include <map>
+#include <iostream>
 //#include "/home/deruhu/git/ethersex/protocols/kuechenlichtprotokoll/udpkuechenlicht.h"
 
 
@@ -33,15 +33,14 @@ void KuechenLichtControl::setup()
 KuechenLichtControl::~KuechenLichtControl()
 {
     delete ui;
-    delete pBCSocket;
-    delete pSendSocket;
 }
 
 void KuechenLichtControl::on_sendButton_clicked()
 {
     QString IPString;
     IPString=ui->lineEditIP->text();
-    ACE_INET_Addr remote((u_short)KUECHENLICHT_UDP_TEST_PORT,IPString.toStdString().c_str());
+    std::cout<<IPString.toStdString()<<std::endl;
+    ACE_INET_Addr remote(static_cast<unsigned short>(KUECHENLICHT_UDP_TEST_PORT), IPString.toStdString().c_str());
 
 
     ledrgb.rotString=ui->lineEditRot->text();
@@ -54,36 +53,58 @@ void KuechenLichtControl::on_sendButton_clicked()
     kSenderLEDStatus.gruen=(unsigned char)ledFarbe.green();
     kSenderLEDStatus.blau=(unsigned char)ledFarbe.blue();
 
-    kuechenLicht_cmd_set commandSet={
-        {	KUECHENLICHT_MAGIC,
-                remote.get_ip_address(),
-                0,
-                KUECHENLICHT_ID_CMD_SET,
-                (ACE_UINT16)sizeof(kuechenLicht_cmd_set)
-        },
-        {
-            kSenderLEDStatus.rot,
-            kSenderLEDStatus.gruen,
-            kSenderLEDStatus.blau
-        },
-        kSenderLEDStatus.rot ^  kSenderLEDStatus.gruen ^  kSenderLEDStatus.blau,
-    };
+    kuechenLicht_cmd_set* commandSet=new kuechenLicht_cmd_set;
+
+    commandSet->kHeader.magic = KUECHENLICHT_MAGIC;
+    commandSet->kHeader.modulAddress =  remote.get_ip_address();
+    commandSet->kHeader.senderAddress = 0;
+    commandSet->kHeader.messageID = KUECHENLICHT_ID_CMD_SET;
+    commandSet->kHeader.messageLength = (ACE_UINT16)sizeof(kuechenLicht_cmd_set);
+
+    commandSet->kLEDStatus.rot = kSenderLEDStatus.rot;
+    commandSet->kLEDStatus.gruen = kSenderLEDStatus.gruen;
+    commandSet->kLEDStatus.blau = kSenderLEDStatus.blau;
+
+    commandSet->checksum = kSenderLEDStatus.rot ^  kSenderLEDStatus.gruen ^  kSenderLEDStatus.blau;
 
     int kDurchlaeufe=0;
     bool erfolg=false;
+    std::map<std::string, kuechenLicht_rsp_set>::iterator it;
     while((kDurchlaeufe<15) && (!erfolg))
     {
-        mutexSendSock.lock();
-        size_t sent_data_length = pSendSocket->send(&commandSet, sizeof (kuechenLicht_cmd_set), remote);
-        mutexSendSock.unlock();
+        cmdMessageContainer box;
+        box.modulAddr=remote;
+        box.size=sizeof(kuechenLicht_cmd_set);
+        memcpy(box.message ,commandSet,sizeof(kuechenLicht_cmd_set));
 
-        if(sent_data_length==-1)
-        {
-            QMessageBox::critical(this, tr("Error"),
-                                  tr("Konnte die Daten nicht senden!"));
-            return;
-        }
+        mutexSendQueue.lock();
+        commandMessageQueue.enqueue(box);
+        mutexSendQueue.unlock();
+
+        emit sendCmdMessages();
+
+        mutexLichterMap.lock();
+        it=mLichterMap.find(remote.get_host_addr());
+        erfolg=compareLEDStatus(it->second.kLEDStatus,commandSet->kLEDStatus);
+        mutexLichterMap.unlock();
+
+        ++kDurchlaeufe;
     }
+    delete commandSet;
+}
+
+bool KuechenLichtControl::compareLEDStatus(kuechenLichtLEDStatus LEDStat1,kuechenLichtLEDStatus LEDStat2)
+{
+    if((LEDStat1.blau) != (LEDStat2.blau))
+        return false;
+
+    if((LEDStat1.gruen) != (LEDStat2.gruen))
+        return false;
+
+    if((LEDStat1.rot) != (LEDStat2.rot))
+        return false;
+
+    return true;
 }
 
 void KuechenLichtControl::on_selectColorButton_clicked()
@@ -119,33 +140,41 @@ void KuechenLichtControl::on_findModulesPushButton_clicked()
 
 void KuechenLichtControl::findModules(void)
 {
-    kuechenLicht_cmd_come_all_ye_faithful commandCome={
-        {KUECHENLICHT_MAGIC,
-         mBCAddress.get_ip_address(),
-         0,
-         KUECHENLICHT_ID_CMD_CAYF,
-         (uint16_t)sizeof(kuechenLicht_cmd_come_all_ye_faithful)
-        },
-        0
-    };
+    kuechenLicht_cmd_come_all_ye_faithful* commandCome= new kuechenLicht_cmd_come_all_ye_faithful;
+
+
+    commandCome->kHeader.magic = KUECHENLICHT_MAGIC;
+    commandCome->kHeader.modulAddress =  0;
+    commandCome->kHeader.senderAddress = 0;
+    commandCome->kHeader.messageID = KUECHENLICHT_ID_CMD_SET;
+    commandCome->kHeader.messageLength = (ACE_UINT16)sizeof(kuechenLicht_cmd_come_all_ye_faithful);
+
+    commandCome->kNumberofCalls = 0;
+
     unsigned char i=0;
 
     while(i<15)
     {
-        commandCome.kNumberofCalls=i;
-        mutexSendSock.lock();
-        pBCSocket->send(&commandCome,sizeof(kuechenLicht_cmd_come_all_ye_faithful),mBCAddress);
-        mutexSendSock.unlock();
+        bcMessageContainer box;
+        memcpy(box.message ,commandCome,sizeof(kuechenLicht_cmd_set));
+        box.size=sizeof(kuechenLicht_cmd_set);
+
+        mutexBCQueue.lock();
+        broadcastMessageQueue.enqueue(box);
+        mutexBCQueue.unlock();
+
+        emit sendBCMessages();
+        commandCome->kNumberofCalls=i;
+
         i++;
     }
+    delete commandCome;
 }
 
 
 void KuechenLichtControl::newModuleSlot(std::string aIPString)
 {
-    ui->foundModulesComboBox->clear();
-    ModulComboListe << aIPString.c_str();
-
+    ui->foundModulesComboBox->addItem(QString (aIPString.c_str()));
 }
 
 void KuechenLichtControl::changedStatusSlot()

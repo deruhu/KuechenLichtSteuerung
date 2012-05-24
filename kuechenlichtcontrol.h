@@ -48,6 +48,8 @@ private slots:
 
     void on_foundModulesComboBox_activated(const QString &arg1);
 
+    bool compareLEDStatus(kuechenLichtLEDStatus LEDStat1,kuechenLichtLEDStatus LEDStat2);
+
 private:
     Ui::KuechenLichtControl *ui;
     ledFarben   ledrgb;
@@ -61,8 +63,8 @@ private:
     void findModules(void);
 
 signals:
-    void sendBCMessage(kuechenLichtHeader*);
-    void sendCmdMessage(kuechenLichtHeader*,ACE_INET_Addr*);
+    void sendBCMessages();
+    void sendCmdMessages();
 
 };
 

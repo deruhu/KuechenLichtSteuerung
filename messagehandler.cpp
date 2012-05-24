@@ -1,18 +1,28 @@
 #include "messagehandler.h"
+#include <ace/OS.h>
 #include <QThread>
 #include <QMutex>
 #include <ace/INET_Addr.h>
 #include <ace/SOCK_Dgram.h>
+#include <ace/SOCK_Dgram_Bcast.h>
+#include <ace/Time_Value.h>
+#include <ace/Log_Msg.h>
 #include <udpkuechenlicht.h>
 #include <map>
 #include "global.h"
 #include <QMessageBox>
+#include <QQueue>
+#include <iostream>
 
-MessageHandler::MessageHandler() : QObject()
+MessageHandler::MessageHandler() : QObject(),
+    kBCAddr (KUECHENLICHT_UDP_BC_MYPORT),
+    kSendAddr (KUECHENLICHT_UDP_CMD_PORT),
+
+    sendtimeout (0,2000)
+
 {
-   kBCAddr (KUECHENLICHT_UDP_BC_PORT);
-   kSendAddr (KUECHENLICHT_UDP_CMD_PORT);
-   mBCAddress(INADDR_ANY);
+    pBCSocket = new ACE_SOCK_Dgram_Bcast(kBCAddr);
+    pSendSocket = new ACE_SOCK_Dgram(kSendAddr);
 }
 
 
@@ -25,9 +35,7 @@ void MessageHandler::handleMessage()
 
     int i=0;
 
-    mutexSendSock.lock();
     ssize_t recv_cnt=pSendSocket->recv(buff,bufflen,remote,flags,&sendtimeout);
-    mutexSendSock.unlock();
 
     kuechenLichtHeader* pParseHeader;
     while((recv_cnt-i)>sizeof(kuechenLichtHeader))
@@ -50,10 +58,11 @@ void MessageHandler::handleMessage()
             default:
                 break;
             }
-
         }
     }
+
 return;
+
 }
 
 void MessageHandler::handleCAYFResponse(kuechenLicht_rsp_cayf* pRespond, ACE_INET_Addr* pIstSender)
@@ -81,9 +90,9 @@ void MessageHandler::handleCAYFResponse(kuechenLicht_rsp_cayf* pRespond, ACE_INE
     commandGotcha.kHeader.messageID=KUECHENLICHT_ID_CMD_GOTCHA;
     commandGotcha.kHeader.messageLength=sizeof(kuechenLicht_cmd_gotcha);
 
-    mutexSendSock.lock();
+    mutexSendQueue.lock();
     size_t sent_data_length = pSendSocket->send(&commandGotcha, commandGotcha.kHeader.messageLength, *pIstSender);
-    mutexSendSock.unlock();
+    mutexSendQueue.unlock();
 
     if(sent_data_length==-1)
     {/*
@@ -107,8 +116,31 @@ void MessageHandler::handleSetResponse(kuechenLicht_rsp_set* pKuechenLichtRsp,AC
     emit signalStatusUpdate();
 }
 
-void MessageHandler::sendCommand(kuechenLichtHeader* sendHeader,ACE_INET_Addr* receiverAddress)
+void MessageHandler::sendCommand()
 {
+    cmdMessageContainer sendBox;
+    mutexSendQueue.lock();
+    while(!commandMessageQueue.isEmpty())
+    {
 
+        sendBox=commandMessageQueue.dequeue();
+
+        if(pSendSocket->send(&(sendBox.message[0]),sendBox.size,sendBox.modulAddr)==-1)
+            std::cout<<"Senden fehlgeschlagen"<<std::endl;
+    }
+
+    mutexSendQueue.unlock();
 }
 
+void MessageHandler::sendBCMessage()
+{
+    bcMessageContainer sendBCBox;
+    mutexBCQueue.lock();
+    while(!broadcastMessageQueue.isEmpty())
+    {
+
+        sendBCBox=broadcastMessageQueue.dequeue();
+        pBCSocket->send(&(sendBCBox.message[0]),sendBCBox.size,KUECHENLICHT_UDP_BC_PORT);
+    }
+    mutexBCQueue.unlock();
+}
