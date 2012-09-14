@@ -15,7 +15,7 @@
 #include <iostream>
 
 MessageHandler::MessageHandler() : QObject(),
-    kBCAddr (KUECHENLICHT_UDP_BC_MYPORT),
+    kBCAddr (KUECHENLICHT_UDP_BC_PORT),
     kSendAddr (KUECHENLICHT_UDP_CMD_PORT),
 
     sendtimeout (0,2000)

@@ -40,7 +40,7 @@ void KuechenLichtControl::on_sendButton_clicked()
     QString IPString;
     IPString=ui->lineEditIP->text();
     std::cout<<IPString.toStdString()<<std::endl;
-    ACE_INET_Addr remote(static_cast<unsigned short>(KUECHENLICHT_UDP_TEST_PORT), IPString.toStdString().c_str());
+    ACE_INET_Addr remote(static_cast<unsigned short>(KUECHENLICHT_UDP_CMD_PORT), IPString.toStdString().c_str());
 
 
     ledrgb.rotString=ui->lineEditRot->text();
